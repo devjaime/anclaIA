@@ -1,0 +1,21 @@
+# Scraping
+httpx
+beautifulsoup4
+lxml
+
+# PDF extraction
+pymupdf
+
+# Vector DB
+chromadb
+
+# Embeddings multilingüe
+sentence-transformers
+
+# API
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Anthropic
+anthropic
