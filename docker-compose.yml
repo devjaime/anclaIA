@@ -1,0 +1,55 @@
+services:
+
+  # ── PostgreSQL + pgvector ────────────────────────────────────────────────────
+  db:
+    image: pgvector/pgvector:pg16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB:       ancladb
+      POSTGRES_USER:     ancla
+      POSTGRES_PASSWORD: ancla
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:         ["CMD-SHELL", "pg_isready -U ancla -d ancladb"]
+      interval:     5s
+      timeout:      5s
+      retries:      10
+      start_period: 10s
+    restart: unless-stopped
+
+  # ── FastAPI backend ──────────────────────────────────────────────────────────
+  backend:
+    build:
+      context:    .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://ancla:ancla@db:5432/ancladb
+      MANUALS_PATH: /data/manuals
+    volumes:
+      - manuals:/data/manuals
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── React / Vite frontend ────────────────────────────────────────────────────
+  frontend:
+    build:
+      context:    frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      BACKEND_URL: http://backend:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:   # datos PostgreSQL persistentes
+  manuals:         # PDFs descargados persistentes

@@ -29,11 +29,36 @@ export default function App() {
     if (image) fd.append("image", image)
 
     try {
-      const r = await fetch("http://localhost:8000/diagnose", { method: "POST", body: fd })
+      const r = await fetch("/api/diagnose", { method: "POST", body: fd })
+      if (r.status === 404) {
+        const data = await r.json()
+        setError(data.detail || `Modelo ${form.model} no indexado aún. Ejecuta: make index`)
+        return
+      }
+      if (!r.ok) {
+        const data = await r.json()
+        setError(data.detail || "Error en el servidor")
+        return
+      }
       const data = await r.json()
       setResult(data.diagnosis)
     } catch (e) {
-      setError("Error conectando con la API")
+      setError("Error conectando con la API. Verifica que el backend esté corriendo.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleExample = async () => {
+    setLoading(true)
+    setError(null)
+    setResult(null)
+    try {
+      const r = await fetch("/api/diagnose/example")
+      const data = await r.json()
+      setResult(data.diagnosis)
+    } catch (e) {
+      setError("Error conectando con la API.")
     } finally {
       setLoading(false)
     }
@@ -43,9 +68,18 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-2xl mx-auto">
 
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-slate-800">AnclaIA</h1>
-          <p className="text-slate-500 text-sm mt-1">Diagnóstico de equipos marítimos</p>
+        <div className="mb-8 flex items-end justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-800">AnclaIA</h1>
+            <p className="text-slate-500 text-sm mt-1">Diagnóstico de equipos marítimos Furuno</p>
+          </div>
+          <button
+            onClick={handleExample}
+            disabled={loading}
+            className="text-sm text-blue-600 hover:text-blue-800 underline disabled:text-slate-400"
+          >
+            Ver ejemplo
+          </button>
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
@@ -151,9 +185,23 @@ export default function App() {
               </div>
             )}
 
-            {result.fuente_manual && (
-              <p className="text-xs text-slate-400">Fuente: {result.fuente_manual}</p>
+            {result.advertencias?.length > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-xs font-medium text-amber-800 mb-1">Advertencias</p>
+                <ul className="space-y-0.5">
+                  {result.advertencias.map((a, i) => (
+                    <li key={i} className="text-xs text-amber-700">{a}</li>
+                  ))}
+                </ul>
+              </div>
             )}
+
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              {result.fuente_manual && <span>Fuente: {result.fuente_manual}</span>}
+              {result.confianza && (
+                <span className="ml-auto">Confianza: <strong>{result.confianza}</strong></span>
+              )}
+            </div>
           </div>
         )}
       </div>

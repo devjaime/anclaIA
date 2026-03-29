@@ -1,0 +1,28 @@
+[project]
+name = "anclaia"
+version = "0.1.0"
+description = "Diagnóstico de equipos marítimos Furuno con RAG + Claude Vision"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    # Scraping
+    "httpx",
+    "beautifulsoup4",
+    "lxml",
+    # PDF extraction
+    "pymupdf",
+    # Vector DB — pgvector (producción)
+    "pgvector",
+    "psycopg2-binary",
+    "sqlalchemy",
+    # Embeddings multilingüe (384-dim, soporte español)
+    "sentence-transformers",
+    # API
+    "fastapi",
+    "uvicorn[standard]",
+    "python-multipart",
+    # Anthropic
+    "anthropic",
+    # Config
+    "python-dotenv",
+]

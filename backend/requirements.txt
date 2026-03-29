@@ -6,10 +6,12 @@ lxml
 # PDF extraction
 pymupdf
 
-# Vector DB
-chromadb
+# Vector DB — pgvector (producción)
+pgvector
+psycopg2-binary
+sqlalchemy
 
-# Embeddings multilingüe
+# Embeddings multilingüe (384-dim, soporte español)
 sentence-transformers
 
 # API
@@ -17,5 +19,8 @@ fastapi
 uvicorn[standard]
 python-multipart
 
-# Anthropic
-anthropic
+# LLM — Gemini via OpenAI-compatible SDK
+openai
+
+# Config
+python-dotenv
