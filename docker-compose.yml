@@ -43,9 +43,10 @@ services:
       context:    frontend
       dockerfile: Dockerfile
     ports:
-      - "5173:5173"
+      - "6001:5173"
     environment:
-      BACKEND_URL: http://backend:8000
+      BACKEND_URL:   http://backend:8000
+      EXTERNAL_PORT: 6001
     depends_on:
       - backend
     restart: unless-stopped

@@ -200,6 +200,64 @@ def diagnose_example():
     })
 
 
+@app.post("/chat")
+async def chat(
+    model:   str = Form(..., description="Modelo del equipo, ej: FAR1523"),
+    message: str = Form(..., description="Pregunta del técnico"),
+):
+    """
+    Chatbot RAG conversacional sobre el manual del equipo.
+    No requiere código de falla — responde preguntas libres.
+    """
+    # ── 1. Verificar modelo indexado ──────────────────────────────────────────
+    if store.model_count(model) == 0:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Modelo {model} no indexado aún. Ejecuta: make docker-index",
+        )
+
+    # ── 2. RAG retrieval ──────────────────────────────────────────────────────
+    chunks      = store.search(query=message, model=model, top_k=5)
+    ctx_quality = _context_quality(chunks)
+    context     = "\n\n---\n\n".join(
+        f"[Pág. {c['page']} · {c['source']}]\n{c['content']}" for c in chunks
+    )
+
+    # ── 3. Llamada al LLM ─────────────────────────────────────────────────────
+    response = llm_client.chat.completions.create(
+        model=LLM_MODEL,
+        max_tokens=800,
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Eres un asistente técnico experto en equipos marítimos Furuno. "
+                    "Responde en español de forma clara, concisa y técnica. "
+                    "Basa tu respuesta en el contexto del manual provisto. "
+                    "Si la información no está en el manual, indícalo honestamente."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Contexto del manual {model}:\n{context}\n\n"
+                    f"Pregunta: {message}"
+                ),
+            },
+        ],
+    )
+
+    msg    = response.choices[0].message
+    answer = (msg.content or getattr(msg, "reasoning", None) or "").strip()
+
+    return JSONResponse(content={
+        "answer":          answer,
+        "context_quality": ctx_quality,
+        "context_used":    len(chunks),
+        "model":           model,
+    })
+
+
 @app.get("/health")
 def health():
     total  = store.count()
