@@ -6,8 +6,10 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@remotion/player": "^4.0.441",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "remotion": "^4.0.441"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",

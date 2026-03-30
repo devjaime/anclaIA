@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react"
+import { Player } from "@remotion/player"
+import { AnclaIAVideo, TOTAL_FRAMES } from "./video/AnclaIAVideo"
 
 const MODELS = ["FAR1523", "FAR1518", "FCV628", "FA170", "FM8900S"]
 
@@ -566,9 +568,69 @@ function ChatTab() {
   )
 }
 
+// ── Pestaña Video ──────────────────────────────────────────────────────────────
+function VideoTab() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-slate-500 text-sm">Video explicativo del proyecto — 46 segundos</p>
+        <span className="shrink-0 text-xs font-medium text-purple-700 bg-purple-100 px-2.5 py-1 rounded-full border border-purple-200">
+          Remotion Player
+        </span>
+      </div>
+
+      {/* Player Remotion */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <Player
+          component={AnclaIAVideo}
+          durationInFrames={TOTAL_FRAMES}
+          compositionWidth={1280}
+          compositionHeight={720}
+          fps={30}
+          style={{ width: "100%", aspectRatio: "16/9", display: "block" }}
+          controls
+          loop
+          autoPlay={false}
+          clickToPlay
+        />
+      </div>
+
+      {/* Info escenas */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
+        <p className="text-sm font-semibold text-slate-700 mb-3">Escenas del video</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {[
+            { n: "00s", title: "Intro — Logo y propuesta de valor" },
+            { n: "04s", title: "El Problema — técnicos sin diagnóstico" },
+            { n: "10s", title: "La Solución — flujo con IA" },
+            { n: "16s", title: "Stack Técnico — arquitectura" },
+            { n: "22s", title: "Demo UI — typewriter en vivo" },
+            { n: "28s", title: "Resultado — diagnóstico estructurado" },
+            { n: "35s", title: "Modelo de negocio — métricas" },
+            { n: "41s", title: "Outro — CTA + links" },
+          ].map((s) => (
+            <div key={s.n} className="flex items-center gap-2.5 text-sm">
+              <span className="shrink-0 text-xs font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                {s.n}
+              </span>
+              <span className="text-slate-600">{s.title}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── App principal ──────────────────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState("diagnose")
+
+  const TABS = [
+    { id: "diagnose", label: "🔧 Diagnóstico" },
+    { id: "chat",     label: "💬 Chat" },
+    { id: "video",    label: "🎬 Video" },
+  ]
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-100 to-slate-50">
@@ -593,27 +655,23 @@ export default function App() {
       <main className="max-w-2xl mx-auto px-4 py-4 sm:py-6">
         {/* Tabs */}
         <div className="flex gap-1 bg-slate-200 rounded-2xl p-1 mb-5 shadow-inner">
-          <button
-            onClick={() => setTab("diagnose")}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-              tab === "diagnose"
-                ? "bg-white text-slate-800 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            }`}>
-            🔧 Diagnóstico
-          </button>
-          <button
-            onClick={() => setTab("chat")}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-              tab === "chat"
-                ? "bg-white text-slate-800 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            }`}>
-            💬 Chat con manual
-          </button>
+          {TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                tab === id
+                  ? "bg-white text-slate-800 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}>
+              {label}
+            </button>
+          ))}
         </div>
 
-        {tab === "diagnose" ? <DiagnosticTab /> : <ChatTab />}
+        {tab === "diagnose" && <DiagnosticTab />}
+        {tab === "chat"     && <ChatTab />}
+        {tab === "video"    && <VideoTab />}
       </main>
 
       {/* Footer */}
