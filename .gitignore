@@ -30,6 +30,11 @@ frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 
+# Remotion video output
+video/node_modules/
+video/out/
+video/.remotion/
+
 # macOS
 .DS_Store
 ._*
