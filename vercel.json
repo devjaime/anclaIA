@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "landing/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/anclaia-demo.mp4", "dest": "/landing/anclaia-demo.mp4" },
+    { "src": "/translations.js", "dest": "/landing/translations.js" },
+    { "src": "/(.*\\.(?:js|css|mp4|png|jpg|ico|svg|webm|woff2?))", "dest": "/landing/$1" },
+    { "src": "/(.*)", "dest": "/landing/$1" }
+  ]
+}

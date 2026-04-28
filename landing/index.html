@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="es" id="html-root">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AnclaIA — Diagnóstico IA para Equipos Marítimos</title>
+  <meta name="description" content="Técnico marítimo: ingresa código de falla + foto → recibe diagnóstico estructurado antes de ir a terreno. RAG + Vision IA sobre manuales Furuno." />
+  <meta property="og:title" content="AnclaIA — Diagnóstico IA para Equipos Marítimos Furuno" />
+  <meta property="og:description" content="Diagnóstico estructurado en segundos. 31,000+ chunks indexados · 7 modelos Furuno · RAG híbrido + Vision." />
+  <meta property="og:type" content="website" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy:    "#0a2342",
+            ocean:   "#0e6ba8",
+            teal:    "#0a9396",
+            seafoam: "#94d2bd",
+            sand:    "#e9d8a6",
+            coral:   "#ee9b00",
+            boya:    "#ca3c25",
+          },
+          fontFamily: {
+            sans: ["Inter", "system-ui", "sans-serif"],
+            mono: ["JetBrains Mono", "Fira Code", "monospace"],
+          },
+        },
+      },
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    html { scroll-behavior: smooth; }
+    .gradient-navy { background: linear-gradient(135deg, #0a2342 0%, #0e6ba8 100%); }
+    .gradient-teal { background: linear-gradient(135deg, #0a9396 0%, #0e6ba8 100%); }
+    .gradient-bg   { background: linear-gradient(180deg, #e0f2f1 0%, #f0f9ff 60%, #fdf8ec 100%); }
+    .gradient-hero { background: linear-gradient(160deg, #0a2342 0%, #0e3d6b 45%, #0a9396 100%); }
+    .text-gradient {
+      background: linear-gradient(135deg, #94d2bd, #0a9396, #94d2bd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .card-glow:hover { box-shadow: 0 0 0 2px #0a9396, 0 20px 40px rgba(10,35,66,.15); }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-8px); }
+    }
+    .float { animation: float 3s ease-in-out infinite; }
+    @keyframes pulse-soft {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .5; }
+    }
+    .pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
+    @keyframes slide-up {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .slide-up { animation: slide-up .6s ease-out both; }
+    .slide-up-2 { animation: slide-up .6s ease-out .15s both; }
+    .slide-up-3 { animation: slide-up .6s ease-out .3s both; }
+    .slide-up-4 { animation: slide-up .6s ease-out .45s both; }
+
+    /* Typewriter */
+    @keyframes typewriter {
+      from { width: 0; }
+      to   { width: 100%; }
+    }
+    @keyframes blink { 50% { border-color: transparent; } }
+    .typewriter {
+      overflow: hidden;
+      white-space: nowrap;
+      border-right: 2px solid #0a9396;
+      animation: typewriter 2s steps(30) 1s both, blink .75s step-end infinite;
+    }
+
+    /* Scroll reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .55s ease, transform .55s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* FAQ accordion */
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .35s ease, padding .35s ease;
+    }
+    .faq-item.open .faq-answer { max-height: 300px; }
+    .faq-item.open .faq-icon { transform: rotate(45deg); }
+    .faq-icon { transition: transform .3s ease; display: inline-block; }
+  </style>
+</head>
+<body class="font-sans antialiased text-navy">
+
+<!-- ══════════════════════════════════════════════════════
+     NAV
+══════════════════════════════════════════════════════ -->
+<nav class="fixed top-0 inset-x-0 z-50 backdrop-blur-md border-b border-white/10" style="background:rgba(10,35,66,.9)">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base" style="background:#0a9396">⚓</div>
+      <span class="font-bold text-white text-base">AnclaIA</span>
+      <span class="hidden sm:inline text-xs font-medium px-2 py-0.5 rounded-full border" style="background:#0a939622;border-color:#94d2bd;color:#94d2bd">Beta</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="#como-funciona" class="hidden sm:block text-xs font-medium text-blue-200 hover:text-white transition-colors" data-i18n="nav.how">Cómo funciona</a>
+      <a href="#stack" class="hidden sm:block text-xs font-medium text-blue-200 hover:text-white transition-colors">Stack</a>
+      <a href="#precios" class="hidden sm:block text-xs font-medium text-blue-200 hover:text-white transition-colors" data-i18n="nav.pricing">Precios</a>
+      <a href="#video-demo" class="hidden sm:block text-xs font-medium text-blue-200 hover:text-white transition-colors" data-i18n="nav.video">Video</a>
+      <a href="#yacht-video" class="hidden sm:block text-xs font-medium text-blue-200 hover:text-white transition-colors">⛵ Travesía</a>
+      <a href="#app-demo" class="hidden sm:block text-xs font-medium text-blue-200 hover:text-white transition-colors" data-i18n="nav.app">📱 App</a>
+      <a href="#waitlist" class="hidden sm:flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all" style="background:#0a939633;color:#94d2bd;border:1px solid #94d2bd55" data-i18n="nav.join">Únete →</a>
+      <button id="lang-btn" onclick="toggleLang()" title="Switch language" class="flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg border border-white/20 hover:bg-white/10 transition-all text-white">
+        <span id="lang-label">EN</span>
+      </button>
+      <a href="https://github.com/devjaime/anclaIA" target="_blank"
+        class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-white border border-white/20 hover:bg-white/10 transition-all">
+        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════════════ -->
+<section class="gradient-hero min-h-screen flex items-center pt-14 overflow-hidden relative">
+  <!-- Decoración fondo -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-10" style="background:radial-gradient(circle,#0a9396,transparent)"></div>
+    <div class="absolute -bottom-20 -left-20 w-80 h-80 rounded-full opacity-10" style="background:radial-gradient(circle,#94d2bd,transparent)"></div>
+    <!-- Grid -->
+    <svg class="absolute inset-0 w-full h-full opacity-5" xmlns="http://www.w3.org/2000/svg">
+      <defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#94d2bd" stroke-width="1"/>
+      </pattern></defs>
+      <rect width="100%" height="100%" fill="url(#grid)"/>
+    </svg>
+  </div>
+
+  <div class="relative max-w-6xl mx-auto px-4 sm:px-6 py-20 sm:py-28 grid lg:grid-cols-2 gap-12 items-center">
+    <!-- Texto -->
+    <div>
+      <div class="slide-up inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-6 border" style="background:#0a939633;border-color:#94d2bd55;color:#94d2bd">
+        <span class="w-1.5 h-1.5 rounded-full pulse-soft" style="background:#94d2bd"></span>
+        <span data-i18n="hero.badge">MVP en producción · Chile &amp; LATAM</span>
+      </div>
+
+      <h1 class="slide-up-2 text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
+        <span data-i18n="hero.title1">Diagnóstico IA</span><br/>
+        <span class="text-gradient" data-i18n="hero.title2">antes de zarpar</span>
+      </h1>
+
+      <p class="slide-up-3 text-blue-200 text-lg leading-relaxed mb-8 max-w-lg" data-i18n-html="hero.desc">
+        El técnico marítimo ingresa un <strong class="text-white">código de falla + foto</strong> →
+        recibe diagnóstico estructurado basado en el manual oficial Furuno en <strong class="text-white">segundos</strong>,
+        antes de ir al buque.
+      </p>
+
+      <div class="slide-up-4 flex flex-col sm:flex-row gap-3">
+        <a href="https://github.com/devjaime/anclaIA" target="_blank"
+          class="flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-navy text-sm transition-all hover:scale-105 shadow-lg"
+          style="background:linear-gradient(135deg,#94d2bd,#0a9396);color:#0a2342"
+          data-i18n="hero.cta1">
+          Ver código en GitHub →
+        </a>
+        <a href="#demo"
+          class="flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-white text-sm border border-white/20 hover:bg-white/10 transition-all"
+          data-i18n="hero.cta2">
+          Ver demo
+        </a>
+      </div>
+
+      <!-- Stats -->
+      <div class="mt-12 grid grid-cols-3 gap-4">
+        <div class="text-center">
+          <p class="text-2xl font-black text-white">31K+</p>
+          <p class="text-xs text-blue-300 mt-0.5" data-i18n="hero.s1">chunks indexados</p>
+        </div>
+        <div class="text-center border-x border-white/10">
+          <p class="text-2xl font-black text-white">7</p>
+          <p class="text-xs text-blue-300 mt-0.5" data-i18n="hero.s2">modelos Furuno</p>
+        </div>
+        <div class="text-center">
+          <p class="text-2xl font-black text-white">&lt;3s</p>
+          <p class="text-xs text-blue-300 mt-0.5" data-i18n="hero.s3">tiempo diagnóstico</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card diagnóstico simulado -->
+    <div class="float hidden lg:block">
+      <div class="rounded-2xl overflow-hidden shadow-2xl border border-white/10 max-w-sm mx-auto">
+        <!-- Header card -->
+        <div class="px-5 py-4" style="background:linear-gradient(135deg,#0a2342,#0e6ba8)">
+          <p class="text-seafoam text-xs font-semibold uppercase tracking-widest mb-1">Diagnóstico</p>
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h3 class="text-white font-bold text-lg">FAR1523</h3>
+              <p class="text-blue-200 text-sm font-mono mt-0.5">Código: E-07</p>
+            </div>
+            <span class="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300 shrink-0 mt-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 pulse-soft"></span>
+              Alta
+            </span>
+          </div>
+        </div>
+        <!-- Body card -->
+        <div class="bg-white p-5 space-y-4">
+          <div class="rounded-xl p-3.5 border" style="background:#f0f9ff;border-color:#0a939640">
+            <p class="text-xs font-bold uppercase tracking-wide mb-1.5" style="color:#0a9396">Causa probable</p>
+            <p class="text-slate-700 text-sm leading-relaxed">Falla en cable coaxial de antena RF o conector deteriorado.</p>
+          </div>
+          <div class="space-y-2">
+            <p class="text-xs font-bold text-slate-600 flex items-center gap-1.5">📋 Pasos del técnico</p>
+            <ol class="space-y-1.5">
+              <li class="flex gap-2 items-start text-xs text-slate-600">
+                <span class="w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5" style="background:linear-gradient(135deg,#0a2342,#0e6ba8)">1</span>
+                Apagar radar desde interruptor principal.
+              </li>
+              <li class="flex gap-2 items-start text-xs text-slate-600">
+                <span class="w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5" style="background:linear-gradient(135deg,#0a2342,#0e6ba8)">2</span>
+                Verificar continuidad cable coaxial con multímetro (&lt;2Ω).
+              </li>
+              <li class="flex gap-2 items-start text-xs text-slate-600">
+                <span class="w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5" style="background:linear-gradient(135deg,#0a2342,#0e6ba8)">3</span>
+                Reemplazar cable si hay corrosión en conectores PL-259.
+              </li>
+            </ol>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <span class="text-xs px-2.5 py-1 rounded-full border font-medium" style="background:#e0f2f1;border-color:#0a939655;color:#0a2342">Multímetro digital</span>
+            <span class="text-xs px-2.5 py-1 rounded-full border font-medium" style="background:#e0f2f1;border-color:#0a939655;color:#0a2342">Llave torque 15Nm</span>
+            <span class="text-xs px-2.5 py-1 rounded-full border font-medium" style="background:#e0f2f1;border-color:#0a939655;color:#0a2342">Cable RG-214</span>
+          </div>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+            <p class="text-xs text-slate-400">📄 Pág. 8-3 · FAR15XX Install Manual</p>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-teal-100 text-teal-800 border border-teal-300">Confianza ALTA</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     EL PROBLEMA
+══════════════════════════════════════════════════════ -->
+<section id="problema" class="py-20 sm:py-28 gradient-bg">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="text-center mb-14">
+      <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#0a9396" data-i18n="prob.label">El problema real</p>
+      <h2 class="text-3xl sm:text-4xl font-black text-navy" data-i18n-html="prob.title">Los técnicos pierden horas<br/>diagnosticando a ciegas</h2>
+    </div>
+
+    <div class="grid sm:grid-cols-3 gap-6">
+      <div class="bg-white rounded-2xl p-6 border border-red-100 shadow-sm card-glow transition-all reveal">
+        <div class="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center text-2xl mb-4">🚢</div>
+        <h3 class="font-bold text-navy mb-2" data-i18n="prob.c1.t">Viaje sin diagnóstico</h3>
+        <p class="text-slate-500 text-sm leading-relaxed" data-i18n="prob.c1.d">El técnico viaja al buque sin saber si necesita cambiar un componente o reconfigurar software. Horas perdidas.</p>
+      </div>
+      <div class="bg-white rounded-2xl p-6 border border-amber-100 shadow-sm card-glow transition-all reveal" style="animation-delay:.12s">
+        <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center text-2xl mb-4">📚</div>
+        <h3 class="font-bold text-navy mb-2" data-i18n="prob.c2.t">Manuales inaccesibles</h3>
+        <p class="text-slate-500 text-sm leading-relaxed" data-i18n="prob.c2.d">Los manuales técnicos de Furuno tienen cientos de páginas. Encontrar el código de falla correcto toma 20-40 minutos.</p>
+      </div>
+      <div class="bg-white rounded-2xl p-6 border border-blue-100 shadow-sm card-glow transition-all reveal" style="animation-delay:.24s">
+        <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-2xl mb-4">💰</div>
+        <h3 class="font-bold text-navy mb-2" data-i18n="prob.c3.t">Costo operacional alto</h3>
+        <p class="text-slate-500 text-sm leading-relaxed" data-i18n="prob.c3.d">Una segunda visita por falta de herramientas o repuesto incorrecto cuesta $200-500 USD en movilización más tiempo de buque parado.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     CÓMO FUNCIONA
+══════════════════════════════════════════════════════ -->
+<section id="como-funciona" class="py-20 sm:py-28 bg-white">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="text-center mb-14">
+      <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#0a9396" data-i18n="how.label">La solución</p>
+      <h2 class="text-3xl sm:text-4xl font-black text-navy" data-i18n="how.title">Diagnóstico estructurado en 3 pasos</h2>
+      <p class="mt-4 text-slate-500 max-w-xl mx-auto" data-i18n="how.sub">RAG híbrido sobre manuales técnicos oficiales Furuno + análisis de imagen con IA.</p>
+    </div>
+
+    <!-- 3 pasos en fila -->
+    <div class="grid sm:grid-cols-5 gap-4 items-start mb-14">
+      <!-- Paso 1 -->
+      <div class="sm:col-span-1 text-center reveal">
+        <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-3xl shadow-md gradient-navy">📱</div>
+        <div class="inline-block text-xs font-bold px-2.5 py-1 rounded-full mb-2" style="background:#e0f2f1;color:#0a9396" data-i18n="how.s1.b">Paso 1</div>
+        <h3 class="font-bold text-navy text-base mb-2" data-i18n="how.s1.t">Ingresa la falla</h3>
+        <p class="text-slate-500 text-sm leading-relaxed" data-i18n="how.s1.d">Modelo, código de falla y foto del display.</p>
+      </div>
+      <!-- Flecha 1 -->
+      <div class="sm:col-span-1 hidden sm:flex items-center justify-center text-3xl text-seafoam pt-8">→</div>
+      <!-- Paso 2 -->
+      <div class="sm:col-span-1 text-center reveal" style="animation-delay:.15s">
+        <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-3xl shadow-md gradient-teal">🤖</div>
+        <div class="inline-block text-xs font-bold px-2.5 py-1 rounded-full mb-2" style="background:#e0f2f1;color:#0a9396" data-i18n="how.s2.b">Paso 2</div>
+        <h3 class="font-bold text-navy text-base mb-2" data-i18n="how.s2.t">IA busca en el manual</h3>
+        <p class="text-slate-500 text-sm leading-relaxed" data-i18n="how.s2.d">RAG híbrido sobre pgvector + Vision analiza la foto.</p>
+      </div>
+      <!-- Flecha 2 -->
+      <div class="sm:col-span-1 hidden sm:flex items-center justify-center text-3xl text-seafoam pt-8">→</div>
+      <!-- Paso 3 -->
+      <div class="sm:col-span-1 text-center reveal" style="animation-delay:.3s">
+        <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-3xl shadow-md" style="background:linear-gradient(135deg,#ee9b00,#ca3c25)">✅</div>
+        <div class="inline-block text-xs font-bold px-2.5 py-1 rounded-full mb-2" style="background:#fdf8ec;color:#ca3c25;border:1px solid #ee9b0044" data-i18n="how.s3.b">Paso 3</div>
+        <h3 class="font-bold text-navy text-base mb-2" data-i18n="how.s3.t">Diagnóstico listo</h3>
+        <p class="text-slate-500 text-sm leading-relaxed" data-i18n="how.s3.d">Causa, componentes, pasos técnicos y advertencias.</p>
+      </div>
+    </div>
+
+    <!-- Diagrama arquitectura -->
+    <div class="rounded-2xl border p-6 sm:p-8" style="background:#f0f9ff;border-color:#94d2bd">
+      <p class="text-xs font-bold uppercase tracking-widest mb-6 text-center" style="color:#0a9396" data-i18n="how.arch">Arquitectura RAG</p>
+      <div class="flex flex-col sm:flex-row items-center gap-3 justify-center text-sm font-medium flex-wrap">
+        <div class="px-4 py-2.5 rounded-xl text-white text-center gradient-navy shadow-sm min-w-36">
+          <p class="text-xs text-blue-300 font-normal">Input</p>
+          <p>Código + Foto</p>
+        </div>
+        <span class="text-seafoam font-bold text-xl">→</span>
+        <div class="px-4 py-2.5 rounded-xl text-white text-center gradient-teal shadow-sm min-w-36">
+          <p class="text-xs text-teal-200 font-normal">pgvector</p>
+          <p>Búsqueda Híbrida</p>
+        </div>
+        <span class="text-seafoam font-bold text-xl">→</span>
+        <div class="px-4 py-2.5 rounded-xl text-white text-center shadow-sm min-w-36" style="background:#ee9b00">
+          <p class="text-xs font-normal opacity-80">Top-5 chunks</p>
+          <p style="color:#0a2342">Manual Furuno</p>
+        </div>
+        <span class="text-seafoam font-bold text-xl">→</span>
+        <div class="px-4 py-2.5 rounded-xl text-white text-center gradient-navy shadow-sm min-w-36">
+          <p class="text-xs text-blue-300 font-normal">LLM + Vision</p>
+          <p>Diagnóstico JSON</p>
+        </div>
+      </div>
+      <p class="text-center mt-5 text-xs text-slate-400" data-i18n="how.arch.f">70% semántico (cosine) + 30% keyword (ILIKE) · Filtro obligatorio por modelo de equipo</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     DEMO JSON
+══════════════════════════════════════════════════════ -->
+<section id="demo" class="py-20 sm:py-28 gradient-bg">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6">
+    <div class="text-center mb-10">
+      <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#0a9396" data-i18n="demo.label">Output real</p>
+      <h2 class="text-3xl sm:text-4xl font-black text-navy" data-i18n="demo.title">Respuesta del sistema</h2>
+      <p class="mt-3 text-slate-500 text-sm" data-i18n="demo.sub">JSON estructurado que el técnico recibe en menos de 3 segundos</p>
+    </div>
+
+    <div class="rounded-2xl overflow-hidden shadow-xl border border-navy/10">
+      <!-- Terminal header -->
+      <div class="flex items-center gap-2 px-4 py-3" style="background:#1e1e2e">
+        <span class="w-3 h-3 rounded-full bg-red-500"></span>
+        <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+        <span class="ml-3 text-xs text-slate-400 font-mono">POST /diagnose → 200 OK &lt;2.1s</span>
+      </div>
+      <!-- Código -->
+      <pre class="p-5 sm:p-6 overflow-x-auto text-xs sm:text-sm leading-relaxed font-mono" style="background:#0d1117;color:#c9d1d9"><code><span style="color:#8b949e">// Respuesta del diagnóstico AnclaIA</span>
+<span style="color:#79c0ff">{</span>
+  <span style="color:#7ee787">"equipo"</span>:               <span style="color:#a5d6ff">"FAR1523"</span>,
+  <span style="color:#7ee787">"codigo_falla"</span>:         <span style="color:#a5d6ff">"E-07"</span>,
+  <span style="color:#7ee787">"causa_probable"</span>:       <span style="color:#a5d6ff">"Falla en cable coaxial de antena RF o conector deteriorado."</span>,
+  <span style="color:#7ee787">"accion"</span>:               <span style="color:#a5d6ff">"CAMBIAR_COMPONENTE"</span>,
+  <span style="color:#7ee787">"componente_afectado"</span>:  <span style="color:#a5d6ff">"Cable coaxial / conector RF de antena"</span>,
+  <span style="color:#7ee787">"urgencia"</span>:             <span style="color:#ffa657">"ALTA"</span>,
+  <span style="color:#7ee787">"pasos_tecnico"</span>: <span style="color:#79c0ff">[</span>
+    <span style="color:#a5d6ff">"Apagar radar desde interruptor principal."</span>,
+    <span style="color:#a5d6ff">"Verificar continuidad cable coaxial con multímetro (debe ser &lt;2Ω)."</span>,
+    <span style="color:#a5d6ff">"Inspeccionar conectores PL-259 en ambos extremos por corrosión."</span>,
+    <span style="color:#a5d6ff">"Reemplazar cable coaxial completo si está dañado."</span>,
+    <span style="color:#a5d6ff">"Reconectar y encender — verificar que E-07 desaparece."</span>
+  <span style="color:#79c0ff">]</span>,
+  <span style="color:#7ee787">"herramientas_necesarias"</span>: <span style="color:#79c0ff">[</span><span style="color:#a5d6ff">"Multímetro digital"</span>, <span style="color:#a5d6ff">"Llave torque 15Nm"</span>, <span style="color:#a5d6ff">"Cable RG-214"</span><span style="color:#79c0ff">]</span>,
+  <span style="color:#7ee787">"advertencias"</span>: <span style="color:#79c0ff">[</span>
+    <span style="color:#a5d6ff">"Apagar ANTES de desconectar la antena."</span>,
+    <span style="color:#a5d6ff">"Nunca transmitir sin antena conectada — daño al magnetrón."</span>
+  <span style="color:#79c0ff">]</span>,
+  <span style="color:#7ee787">"confianza"</span>:             <span style="color:#56d364">"ALTA"</span>,
+  <span style="color:#7ee787">"fuente_manual"</span>:         <span style="color:#a5d6ff">"pág. 8-3 del FAR15XX Installation Manual"</span>
+<span style="color:#79c0ff">}</span></code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     VIDEO DEMO (Remotion — MP4 renderizado)
+══════════════════════════════════════════════════════ -->
+<section id="video-demo" class="py-20 sm:py-28 bg-white">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6">
+    <div class="text-center mb-10">
+      <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#0a9396" data-i18n="video.label">Demo en video</p>
+      <h2 class="text-3xl sm:text-4xl font-black text-navy" data-i18n="video.title">AnclaIA en acción</h2>
+      <p class="mt-3 text-slate-500 text-sm max-w-xl mx-auto" data-i18n-html="video.sub">
+        Recorrido completo: problema → solución → stack → diagnóstico real.
+        Generado con <strong class="text-navy">Remotion</strong>.
+      </p>
+    </div>
+
+    <!-- Video player -->
+    <div class="rounded-2xl overflow-hidden shadow-2xl border border-slate-200 reveal" style="background:#0f172a">
+      <div class="flex items-center justify-between px-5 py-3 border-b border-white/10">
+        <div class="flex items-center gap-2.5">
+          <div class="flex gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-red-500 opacity-80"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-400 opacity-80"></span>
+            <span class="w-3 h-3 rounded-full bg-green-500 opacity-80"></span>
+          </div>
+          <span class="text-xs text-slate-400 font-mono ml-2">anclaia-demo.mp4 · Remotion 4.0</span>
+        </div>
+        <span class="text-xs px-2 py-0.5 rounded-full border font-semibold" style="background:#0a939622;border-color:#94d2bd55;color:#94d2bd">52s · 8 escenas</span>
+      </div>
+      <div class="relative" style="padding-top:56.25%">
+        <video
+          class="absolute inset-0 w-full h-full"
+          src="anclaia-demo.mp4"
+          controls
+          preload="metadata"
+          poster=""
+          style="background:#0f172a"
+        ></video>
+      </div>
+    </div>
+
+    <!-- Mapa de escenas -->
+    <div class="mt-8 grid grid-cols-4 sm:grid-cols-8 gap-2">
+      <div class="rounded-xl p-2.5 text-center border reveal" style="background:#f0f9ff;border-color:#94d2bd;animation-delay:.05s"><p class="text-base mb-1">🎬</p><p class="text-xs font-bold text-navy" data-i18n="sc.intro">Intro</p></div>
+      <div class="rounded-xl p-2.5 text-center border reveal" style="background:#fff1f2;border-color:#fecdd3;animation-delay:.1s"><p class="text-base mb-1">⚠️</p><p class="text-xs font-bold text-navy" data-i18n="sc.prob">Problema</p></div>
+      <div class="rounded-xl p-2.5 text-center border reveal" style="background:#f0f9ff;border-color:#94d2bd;animation-delay:.15s"><p class="text-base mb-1">💡</p><p class="text-xs font-bold text-navy" data-i18n="sc.sol">Solución</p></div>
+      <div class="rounded-xl p-2.5 text-center border reveal" style="background:#faf5ff;border-color:#d8b4fe;animation-delay:.2s"><p class="text-base mb-1">⚙️</p><p class="text-xs font-bold text-navy" data-i18n="sc.stack">Stack</p></div>
+      <div class="rounded-xl p-2.5 text-center border reveal" style="background:#f0fdf4;border-color:#86efac;animation-delay:.25s"><p class="text-base mb-1">🖥️</p><p class="text-xs font-bold text-navy" data-i18n="sc.ui">Demo UI</p></div>
+      <div class="rounded-xl p-2.5 text-center border reveal" style="background:#f0fdf4;border-color:#86efac;animation-delay:.3s"><p class="text-base mb-1">✅</p><p class="text-xs font-bold text-navy" data-i18n="sc.res">Resultado</p></div>
+      <div class="rounded-xl p-2.5 text-center border reveal" style="background:#fefce8;border-color:#fde68a;animation-delay:.35s"><p class="text-base mb-1">💰</p><p class="text-xs font-bold text-navy" data-i18n="sc.biz">Negocio</p></div>
+      <div class="rounded-xl p-2.5 text-center border reveal" style="background:#f0f9ff;border-color:#94d2bd;animation-delay:.4s"><p class="text-base mb-1">🚀</p><p class="text-xs font-bold text-navy" data-i18n="sc.cta">CTA</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     VIDEO TRAVESÍA YATE
+══════════════════════════════════════════════════════ -->
+<section id="yacht-video" class="py-20 sm:py-28 gradient-bg">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6">
+    <div class="text-center mb-10">
+      <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#0a9396">Caso real</p>
+      <h2 class="text-3xl sm:text-4xl font-black text-navy">Una travesía. 5 puertos. 0 fallas.</h2>
+      <p class="mt-3 text-slate-500 text-sm max-w-xl mx-auto">
+        El S/Y <strong class="text-navy">ANCORA</strong> zarpa desde Italia — AnclaIA diagnostica cada equipo antes de llegar a puerto.
+        <strong class="text-navy">Italia → España → México → Colombia → Chile.</strong>
+      </p>
+    </div>
+
+    <!-- Ruta badges -->
+    <div class="flex flex-wrap justify-center gap-2 mb-8">
+      <span class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border" style="background:#f0f9ff;border-color:#94d2bd;color:#0a2342">🇮🇹 Génova · FAR1523</span>
+      <span class="text-slate-300 self-center">→</span>
+      <span class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border" style="background:#f0f9ff;border-color:#94d2bd;color:#0a2342">🇪🇸 Barcelona · FA170</span>
+      <span class="text-slate-300 self-center">→</span>
+      <span class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border" style="background:#f0f9ff;border-color:#94d2bd;color:#0a2342">🇲🇽 Veracruz · FCV628</span>
+      <span class="text-slate-300 self-center">→</span>
+      <span class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border" style="background:#f0f9ff;border-color:#94d2bd;color:#0a2342">🇨🇴 Cartagena · FM8900S</span>
+      <span class="text-slate-300 self-center">→</span>
+      <span class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border" style="background:#e0f2f1;border-color:#0a9396;color:#0a2342">🇨🇱 Valparaíso · FAR1518</span>
+    </div>
+
+    <!-- Player -->
+    <div class="rounded-2xl overflow-hidden shadow-2xl border border-slate-200 reveal" style="background:#0f172a">
+      <div class="flex items-center justify-between px-5 py-3 border-b border-white/10">
+        <div class="flex items-center gap-2.5">
+          <div class="flex gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-red-500 opacity-80"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-400 opacity-80"></span>
+            <span class="w-3 h-3 rounded-full bg-green-500 opacity-80"></span>
+          </div>
+          <span class="text-xs text-slate-400 font-mono ml-2">yacht-journey.mp4 · Remotion 4.0</span>
+        </div>
+        <span class="text-xs px-2 py-0.5 rounded-full border font-semibold" style="background:#0a939622;border-color:#94d2bd55;color:#94d2bd">73s · 9 escenas · 5 puertos</span>
+      </div>
+      <div class="relative" style="padding-top:56.25%">
+        <video class="absolute inset-0 w-full h-full" src="yacht-journey.mp4" controls preload="metadata" style="background:#0f172a"></video>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="mt-8 grid grid-cols-3 gap-4">
+      <div class="bg-white rounded-2xl p-5 text-center border border-slate-100 shadow-sm reveal">
+        <p class="text-3xl font-black text-navy">2h 53m</p>
+        <p class="text-xs text-slate-400 mt-1">tiempo ahorrado en la travesía</p>
+      </div>
+      <div class="bg-white rounded-2xl p-5 text-center border border-slate-100 shadow-sm reveal" style="animation-delay:.1s">
+        <p class="text-3xl font-black text-navy">11.1s</p>
+        <p class="text-xs text-slate-400 mt-1">promedio por diagnóstico</p>
+      </div>
+      <div class="bg-white rounded-2xl p-5 text-center border border-slate-100 shadow-sm reveal" style="animation-delay:.2s">
+        <p class="text-3xl font-black text-navy">$0</p>
+        <p class="text-xs text-slate-400 mt-1">visitas extra al barco</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     DEMO APP FLUTTER (simulación interactiva)
+══════════════════════════════════════════════════════ -->
+<section id="app-demo" class="py-20 sm:py-28 gradient-bg">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="text-center mb-12">
+      <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#0a9396" data-i18n="app.label">App móvil</p>
+      <h2 class="text-3xl sm:text-4xl font-black text-navy" data-i18n="app.title">Simulación Flutter</h2>
+      <p class="mt-3 text-slate-500 text-sm max-w-xl mx-auto">
+        Así se ve AnclaIA en el teléfono del técnico. Toca las pantallas para navegar el flujo completo.
+      </p>
+    </div>
+
+    <div class="flex flex-col lg:flex-row items-center justify-center gap-12">
+
+      <!-- Teléfono mockup -->
+      <div class="relative shrink-0" id="phone-wrap">
+        <!-- Marco del teléfono -->
+        <div style="width:300px;height:620px;background:linear-gradient(160deg,#1a1a2e,#16213e);border-radius:44px;padding:12px;box-shadow:0 40px 80px rgba(10,35,66,.45),0 0 0 1.5px #334155,inset 0 0 0 1px #0f172a">
+          <!-- Pantalla -->
+          <div style="width:100%;height:100%;border-radius:34px;overflow:hidden;position:relative;background:#f8fafc">
+            <!-- Notch -->
+            <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:90px;height:22px;background:#1a1a2e;border-radius:0 0 16px 16px;z-index:20"></div>
+
+            <!-- PANTALLA 0: Inicio / Form -->
+            <div id="screen-0" class="phone-screen" style="position:absolute;inset:0;display:flex;flex-direction:column;background:#f8fafc;transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .4s">
+              <!-- App bar -->
+              <div style="background:linear-gradient(135deg,#0a2342,#0e3d6b);padding:28px 16px 14px;display:flex;align-items:center;justify-content:space-between">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="width:28px;height:28px;background:#0a9396;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px">⚓</div>
+                  <span style="color:white;font-weight:700;font-size:15px;font-family:system-ui">AnclaIA</span>
+                </div>
+                <div style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:13px">👤</div>
+              </div>
+              <!-- Contenido -->
+              <div style="padding:16px;flex:1;overflow-y:auto">
+                <p style="font-size:11px;font-weight:700;color:#0a9396;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;font-family:system-ui">Nuevo diagnóstico</p>
+                <!-- Selector modelo -->
+                <div style="margin-bottom:12px">
+                  <label style="font-size:10px;font-weight:600;color:#64748b;font-family:system-ui;display:block;margin-bottom:5px">MODELO DEL EQUIPO</label>
+                  <div style="border:1.5px solid #94d2bd;border-radius:12px;padding:10px 12px;background:white;display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-size:13px;font-weight:600;color:#0a2342;font-family:system-ui">FAR1523 — Radar</span>
+                    <span style="color:#0a9396;font-size:11px">▼</span>
+                  </div>
+                </div>
+                <!-- Código de falla -->
+                <div style="margin-bottom:12px">
+                  <label style="font-size:10px;font-weight:600;color:#64748b;font-family:system-ui;display:block;margin-bottom:5px">CÓDIGO DE FALLA</label>
+                  <div style="border:2px solid #0a9396;border-radius:12px;padding:10px 12px;background:white;box-shadow:0 0 0 3px #0a939615">
+                    <span style="font-size:14px;font-weight:700;color:#0a2342;font-family:monospace">E-07</span>
+                    <span style="color:#0a9396;animation:blink .75s step-end infinite;font-weight:300">|</span>
+                  </div>
+                </div>
+                <!-- Descripción -->
+                <div style="margin-bottom:12px">
+                  <label style="font-size:10px;font-weight:600;color:#64748b;font-family:system-ui;display:block;margin-bottom:5px">DESCRIPCIÓN</label>
+                  <div style="border:1.5px solid #e2e8f0;border-radius:12px;padding:10px 12px;background:white;min-height:52px">
+                    <span style="font-size:12px;color:#475569;font-family:system-ui;line-height:1.5">Radar no adquiere blanco, señal RF baja, display E-07.</span>
+                  </div>
+                </div>
+                <!-- Foto -->
+                <div style="margin-bottom:16px">
+                  <label style="font-size:10px;font-weight:600;color:#64748b;font-family:system-ui;display:block;margin-bottom:5px">FOTO DEL DISPLAY (opcional)</label>
+                  <div style="border:1.5px dashed #94d2bd;border-radius:12px;padding:12px;background:#f0f9ff;display:flex;align-items:center;gap:10px">
+                    <div style="width:36px;height:36px;background:linear-gradient(135deg,#0a2342,#0e6ba8);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📷</div>
+                    <div>
+                      <p style="font-size:11px;font-weight:600;color:#0a2342;margin:0;font-family:system-ui">Cámara / Galería</p>
+                      <p style="font-size:10px;color:#64748b;margin:0;font-family:system-ui">Mejora el diagnóstico</p>
+                    </div>
+                  </div>
+                </div>
+                <!-- Botón -->
+                <button onclick="goScreen(1)" style="width:100%;padding:13px;border-radius:14px;background:linear-gradient(135deg,#0a9396,#0e6ba8);color:white;font-weight:700;font-size:14px;border:none;cursor:pointer;font-family:system-ui;box-shadow:0 4px 16px rgba(10,147,150,.35)">
+                  Diagnosticar →
+                </button>
+              </div>
+              <!-- Nav bar -->
+              <div style="display:flex;background:white;border-top:1px solid #e2e8f0;padding:8px 0 10px">
+                <div style="flex:1;text-align:center"><div style="font-size:18px">🏠</div><div style="font-size:9px;color:#0a9396;font-weight:700;font-family:system-ui">Inicio</div></div>
+                <div style="flex:1;text-align:center"><div style="font-size:18px">📋</div><div style="font-size:9px;color:#94a3b8;font-family:system-ui">Historial</div></div>
+                <div style="flex:1;text-align:center"><div style="font-size:18px">💬</div><div style="font-size:9px;color:#94a3b8;font-family:system-ui">Chat RAG</div></div>
+                <div style="flex:1;text-align:center"><div style="font-size:18px">👤</div><div style="font-size:9px;color:#94a3b8;font-family:system-ui">Perfil</div></div>
+              </div>
+            </div>
+
+            <!-- PANTALLA 1: Procesando -->
+            <div id="screen-1" class="phone-screen" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#0a2342,#0e3d6b,#0a9396);transform:translateX(100%);opacity:0;transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .4s;padding:32px">
+              <div id="ai-spinner" style="width:72px;height:72px;border:3px solid rgba(148,210,189,.2);border-top:3px solid #94d2bd;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:28px"></div>
+              <h3 style="color:white;font-size:20px;font-weight:800;text-align:center;margin-bottom:10px;font-family:system-ui">Analizando con IA</h3>
+              <p style="color:#94d2bd;font-size:13px;text-align:center;font-family:system-ui;line-height:1.6;margin-bottom:32px">Búsqueda en 31.000+ chunks del manual FAR1523 · Vision IA activada</p>
+              <!-- Pasos -->
+              <div style="width:100%;space-y:8px">
+                <div id="step-1" class="ai-step" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.08);border-radius:12px;margin-bottom:8px;opacity:0;transform:translateX(-20px);transition:all .4s .2s">
+                  <span style="font-size:16px">🔍</span><span style="color:#e2e8f0;font-size:12px;font-family:system-ui">Embeddings → pgvector</span>
+                  <span style="margin-left:auto;color:#94d2bd;font-size:11px;font-weight:700">✓</span>
+                </div>
+                <div id="step-2" class="ai-step" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.08);border-radius:12px;margin-bottom:8px;opacity:0;transform:translateX(-20px);transition:all .4s .5s">
+                  <span style="font-size:16px">📄</span><span style="color:#e2e8f0;font-size:12px;font-family:system-ui">Top-5 chunks · pág. 8-3</span>
+                  <span style="margin-left:auto;color:#94d2bd;font-size:11px;font-weight:700">✓</span>
+                </div>
+                <div id="step-3" class="ai-step" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.08);border-radius:12px;opacity:0;transform:translateX(-20px);transition:all .4s .8s">
+                  <span style="font-size:16px">🤖</span><span style="color:#e2e8f0;font-size:12px;font-family:system-ui">LLM construye diagnóstico</span>
+                  <span id="step-3-dot" style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#94d2bd;animation:pulse-soft 1s infinite"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- PANTALLA 2: Resultado -->
+            <div id="screen-2" class="phone-screen" style="position:absolute;inset:0;display:flex;flex-direction:column;background:#f8fafc;transform:translateX(100%);opacity:0;transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .4s">
+              <!-- Header resultado -->
+              <div style="background:linear-gradient(135deg,#0a2342,#0e3d6b);padding:28px 16px 14px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                  <button onclick="goScreen(0)" style="background:rgba(255,255,255,.1);border:none;border-radius:8px;width:28px;height:28px;color:white;cursor:pointer;font-size:14px">←</button>
+                  <span style="color:#94d2bd;font-size:11px;font-weight:700;font-family:system-ui;text-transform:uppercase;letter-spacing:.08em">Diagnóstico</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:start">
+                  <div>
+                    <p style="color:white;font-size:18px;font-weight:800;margin:0;font-family:system-ui">FAR1523</p>
+                    <p style="color:#94d2bd;font-size:12px;margin:4px 0 0;font-family:monospace">Código: E-07</p>
+                  </div>
+                  <div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:20px;padding:4px 10px;display:flex;align-items:center;gap:5px">
+                    <div style="width:6px;height:6px;border-radius:50%;background:#f59e0b"></div>
+                    <span style="font-size:11px;font-weight:700;color:#92400e;font-family:system-ui">ALTA</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Contenido resultado -->
+              <div style="padding:14px;flex:1;overflow-y:auto">
+                <div style="background:#f0f9ff;border:1.5px solid #94d2bd;border-radius:14px;padding:12px;margin-bottom:10px">
+                  <p style="font-size:10px;font-weight:700;color:#0a9396;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;font-family:system-ui">Causa probable</p>
+                  <p style="font-size:12px;color:#1e293b;line-height:1.5;margin:0;font-family:system-ui">Falla en cable coaxial de antena RF o conector deteriorado (PL-259).</p>
+                </div>
+                <div style="background:white;border:1.5px solid #e2e8f0;border-radius:14px;padding:12px;margin-bottom:10px">
+                  <p style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-family:system-ui">Pasos técnicos</p>
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="display:flex;gap:8px;align-items:start">
+                      <div style="width:18px;height:18px;background:linear-gradient(135deg,#0a2342,#0e6ba8);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px"><span style="color:white;font-size:9px;font-weight:700">1</span></div>
+                      <p style="font-size:11px;color:#475569;margin:0;line-height:1.4;font-family:system-ui">Apagar radar desde interruptor principal.</p>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:start">
+                      <div style="width:18px;height:18px;background:linear-gradient(135deg,#0a2342,#0e6ba8);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px"><span style="color:white;font-size:9px;font-weight:700">2</span></div>
+                      <p style="font-size:11px;color:#475569;margin:0;line-height:1.4;font-family:system-ui">Verificar continuidad cable coaxial con multímetro (&lt;2Ω).</p>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:start">
+                      <div style="width:18px;height:18px;background:linear-gradient(135deg,#0a2342,#0e6ba8);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px"><span style="color:white;font-size:9px;font-weight:700">3</span></div>
+                      <p style="font-size:11px;color:#475569;margin:0;line-height:1.4;font-family:system-ui">Reemplazar cable RG-214 si hay corrosión en conectores.</p>
+                    </div>
+                  </div>
+                </div>
+                <!-- Herramientas -->
+                <div style="margin-bottom:10px">
+                  <p style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;font-family:system-ui">Herramientas</p>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px">
+                    <span style="background:#e0f2f1;border:1px solid #94d2bd;border-radius:20px;padding:4px 10px;font-size:10px;font-weight:600;color:#0a2342;font-family:system-ui">Multímetro</span>
+                    <span style="background:#e0f2f1;border:1px solid #94d2bd;border-radius:20px;padding:4px 10px;font-size:10px;font-weight:600;color:#0a2342;font-family:system-ui">Torque 15Nm</span>
+                    <span style="background:#e0f2f1;border:1px solid #94d2bd;border-radius:20px;padding:4px 10px;font-size:10px;font-weight:600;color:#0a2342;font-family:system-ui">Cable RG-214</span>
+                  </div>
+                </div>
+                <!-- Footer -->
+                <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #e2e8f0">
+                  <p style="font-size:10px;color:#94a3b8;margin:0;font-family:system-ui">📄 Pág. 8-3 · FAR15XX Manual</p>
+                  <span style="background:#dcfce7;border:1px solid #86efac;border-radius:20px;padding:3px 8px;font-size:10px;font-weight:700;color:#166534;font-family:system-ui">ALTA confianza</span>
+                </div>
+                <button onclick="goScreen(0)" style="width:100%;margin-top:12px;padding:11px;border-radius:12px;background:linear-gradient(135deg,#0a9396,#0e6ba8);color:white;font-weight:700;font-size:12px;border:none;cursor:pointer;font-family:system-ui">
+                  Nuevo diagnóstico
+                </button>
+              </div>
+            </div>
+
+          </div><!-- /pantalla -->
+        </div><!-- /marco teléfono -->
+
+        <!-- Botón home físico -->
+        <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1.5px solid #334155;margin:10px auto 0;box-shadow:0 4px 12px rgba(0,0,0,.3)"></div>
+      </div><!-- /phone-wrap -->
+
+      <!-- Panel explicativo -->
+      <div class="max-w-sm">
+        <div id="panel-0" class="app-panel">
+          <div class="inline-flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full mb-4 border" style="background:#e0f2f1;border-color:#94d2bd;color:#0a9396">
+            Pantalla 1 de 3
+          </div>
+          <h3 class="text-2xl font-black text-navy mb-3">Ingresa la falla</h3>
+          <p class="text-slate-500 text-sm leading-relaxed mb-4">El técnico selecciona el modelo, escribe el código de falla y una descripción. La foto es opcional pero mejora el diagnóstico hasta un 40%.</p>
+          <ul class="space-y-2">
+            <li class="flex items-start gap-2 text-sm text-slate-600"><span style="color:#0a9396" class="mt-0.5">✓</span>Selector de modelos Furuno</li>
+            <li class="flex items-start gap-2 text-sm text-slate-600"><span style="color:#0a9396" class="mt-0.5">✓</span>Cámara nativa del dispositivo</li>
+            <li class="flex items-start gap-2 text-sm text-slate-600"><span style="color:#0a9396" class="mt-0.5">✓</span>Funciona en iOS y Android</li>
+          </ul>
+          <button onclick="goScreen(1)" class="mt-6 flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl transition-all hover:scale-105" style="background:linear-gradient(135deg,#0a9396,#0e6ba8);color:white">
+            Ver siguiente pantalla →
+          </button>
+        </div>
+
+        <div id="panel-1" class="app-panel hidden">
+          <div class="inline-flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full mb-4 border" style="background:#f0f9ff;border-color:#94d2bd;color:#0a9396">
+            Pantalla 2 de 3
+          </div>
+          <h3 class="text-2xl font-black text-navy mb-3">IA procesando</h3>
+          <p class="text-slate-500 text-sm leading-relaxed mb-4">En menos de 3 segundos el sistema ejecuta búsqueda híbrida en pgvector, recupera los 5 chunks más relevantes del manual y construye el diagnóstico con el LLM.</p>
+          <ul class="space-y-2">
+            <li class="flex items-start gap-2 text-sm text-slate-600"><span style="color:#0a9396" class="mt-0.5">✓</span>31.000+ chunks indexados</li>
+            <li class="flex items-start gap-2 text-sm text-slate-600"><span style="color:#0a9396" class="mt-0.5">✓</span>70% semántico + 30% keyword</li>
+            <li class="flex items-start gap-2 text-sm text-slate-600"><span style="color:#0a9396" class="mt-0.5">✓</span>Tiempo promedio &lt;3s</li>
+          </ul>
+          <button onclick="goScreen(2)" class="mt-6 flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl transition-all hover:scale-105" style="background:linear-gradient(135deg,#0a9396,#0e6ba8);color:white">
+            Ver diagnóstico →
+          </button>
+        </div>
+
+        <div id="panel-2" class="app-panel hidden">
+          <div class="inline-flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full mb-4 border" style="background:#f0fdf4;border-color:#86efac;color:#166534">
+            Pantalla 3 de 3
+          </div>
+          <h3 class="text-2xl font-black text-navy mb-3">Diagnóstico listo</h3>
+          <p class="text-slate-500 text-sm leading-relaxed mb-4">El técnico recibe causa probable, pasos técnicos, herramientas necesarias y la página exacta del manual — todo antes de zarpar.</p>
+          <ul class="space-y-2">
+            <li class="flex items-start gap-2 text-sm text-slate-600"><span style="color:#0a9396" class="mt-0.5">✓</span>Fuente citada (página del manual)</li>
+            <li class="flex items-start gap-2 text-sm text-slate-600"><span style="color:#0a9396" class="mt-0.5">✓</span>Nivel de confianza explícito</li>
+            <li class="flex items-start gap-2 text-sm text-slate-600"><span style="color:#0a9396" class="mt-0.5">✓</span>Guardado en historial automático</li>
+          </ul>
+          <button onclick="goScreen(0)" class="mt-6 flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl border transition-all" style="border-color:#94d2bd;color:#0a9396">
+            ← Volver al inicio
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /flex -->
+  </div>
+</section>
+
+<style>
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<script>
+  var currentScreen = 0;
+  var processingTimer = null;
+
+  function goScreen(n) {
+    var screens = document.querySelectorAll('.phone-screen');
+    var panels  = document.querySelectorAll('.app-panel');
+
+    screens.forEach(function(s, i) {
+      if (i === n) {
+        s.style.transform = 'translateX(0)';
+        s.style.opacity = '1';
+      } else {
+        s.style.transform = i < n ? 'translateX(-100%)' : 'translateX(100%)';
+        s.style.opacity = '0';
+      }
+    });
+
+    panels.forEach(function(p, i) {
+      p.classList.toggle('hidden', i !== n);
+    });
+
+    currentScreen = n;
+
+    if (n === 1) {
+      clearTimeout(processingTimer);
+      var steps = document.querySelectorAll('.ai-step');
+      steps.forEach(function(s) {
+        s.style.opacity = '0';
+        s.style.transform = 'translateX(-20px)';
+      });
+      setTimeout(function() {
+        steps.forEach(function(s) {
+          s.style.opacity = '1';
+          s.style.transform = 'translateX(0)';
+        });
+      }, 100);
+      processingTimer = setTimeout(function() { goScreen(2); }, 3200);
+    }
+  }
+</script>
+
+<!-- ══════════════════════════════════════════════════════
+     EQUIPOS SOPORTADOS
+══════════════════════════════════════════════════════ -->
+<section class="py-20 bg-white">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="text-center mb-12">
+      <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#0a9396" data-i18n="eq.label">MVP · Equipos soportados</p>
+      <h2 class="text-3xl sm:text-4xl font-black text-navy" data-i18n="eq.title">Modelos Furuno indexados</h2>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div class="rounded-2xl p-4 text-center border card-glow transition-all" style="background:#f0f9ff;border-color:#94d2bd">
+        <p class="text-2xl mb-2">📡</p>
+        <p class="font-bold text-navy text-sm">FAR1523</p>
+        <p class="text-xs text-slate-400 mt-1" data-i18n="eq.radar">Radar marino</p>
+      </div>
+      <div class="rounded-2xl p-4 text-center border card-glow transition-all" style="background:#f0f9ff;border-color:#94d2bd">
+        <p class="text-2xl mb-2">📡</p>
+        <p class="font-bold text-navy text-sm">FAR1518</p>
+        <p class="text-xs text-slate-400 mt-1">Radar marino</p>
+      </div>
+      <div class="rounded-2xl p-4 text-center border card-glow transition-all" style="background:#f0f9ff;border-color:#94d2bd">
+        <p class="text-2xl mb-2">📡</p>
+        <p class="font-bold text-navy text-sm">FAR2127</p>
+        <p class="text-xs text-slate-400 mt-1">Radar marino</p>
+      </div>
+      <div class="rounded-2xl p-4 text-center border card-glow transition-all" style="background:#f0f9ff;border-color:#94d2bd">
+        <p class="text-2xl mb-2">🐟</p>
+        <p class="font-bold text-navy text-sm">FCV628</p>
+        <p class="text-xs text-slate-400 mt-1" data-i18n="eq.fish">Ecosonda pesca</p>
+      </div>
+      <div class="rounded-2xl p-4 text-center border card-glow transition-all" style="background:#f0f9ff;border-color:#94d2bd">
+        <p class="text-2xl mb-2">🛰️</p>
+        <p class="font-bold text-navy text-sm">FA170</p>
+        <p class="text-xs text-slate-400 mt-1" data-i18n="eq.ais">AIS Transponder</p>
+      </div>
+      <div class="rounded-2xl p-4 text-center border card-glow transition-all" style="background:#f0f9ff;border-color:#94d2bd">
+        <p class="text-2xl mb-2">📻</p>
+        <p class="font-bold text-navy text-sm">FM8900S</p>
+        <p class="text-xs text-slate-400 mt-1" data-i18n="eq.radio">Radio GMDSS</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     STACK TÉCNICO
+══════════════════════════════════════════════════════ -->
+<section id="stack" class="py-20 sm:py-28 gradient-bg">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="text-center mb-14">
+      <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#0a9396" data-i18n="stk.label">Ingeniería</p>
+      <h2 class="text-3xl sm:text-4xl font-black text-navy" data-i18n="stk.title">Stack técnico</h2>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-glow transition-all">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-xl gradient-navy flex items-center justify-center text-lg">⚙️</div>
+          <div>
+            <p class="font-bold text-navy text-sm">Backend</p>
+            <p class="text-xs text-slate-400">FastAPI + Python 3.12</p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 leading-relaxed" data-i18n="stk.be.d">API REST async. Endpoints: /diagnose, /chat, /health, /models. uv para gestión de dependencias.</p>
+      </div>
+
+      <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-glow transition-all">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-xl gradient-teal flex items-center justify-center text-lg">🗄️</div>
+          <div>
+            <p class="font-bold text-navy text-sm">Vector DB</p>
+            <p class="text-xs text-slate-400">pgvector · PostgreSQL 16</p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 leading-relaxed" data-i18n="stk.db.d">Búsqueda híbrida 70% semántica (cosine) + 30% keyword (ILIKE). Filtro obligatorio por modelo de equipo.</p>
+      </div>
+
+      <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-glow transition-all">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background:linear-gradient(135deg,#ee9b00,#ca3c25)">🤖</div>
+          <div>
+            <p class="font-bold text-navy text-sm">LLM + Vision</p>
+            <p class="text-xs text-slate-400">OpenRouter · multi-modelo</p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 leading-relaxed" data-i18n="stk.llm.d">Modelo intercambiable vía .env sin rebuild. Vision habilitada para análisis de fotos. Recomendado: Mistral Small.</p>
+      </div>
+
+      <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-glow transition-all">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background:linear-gradient(135deg,#94d2bd,#0a9396)">🧠</div>
+          <div>
+            <p class="font-bold text-navy text-sm">Embeddings</p>
+            <p class="text-xs text-slate-400">MiniLM-L12-v2 multilingual</p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 leading-relaxed" data-i18n="stk.emb.d">paraphrase-multilingual-MiniLM-L12-v2 · 384 dims · soporte nativo español. Chunking 800 chars, overlap 100.</p>
+      </div>
+
+      <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-glow transition-all">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-xl gradient-navy flex items-center justify-center text-lg">⚛️</div>
+          <div>
+            <p class="font-bold text-navy text-sm">Frontend</p>
+            <p class="text-xs text-slate-400">React 18 + Tailwind + Vite</p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 leading-relaxed" data-i18n="stk.fe.d">Mobile-first. Cámara nativa para capturar foto del equipo. Chat RAG conversacional. Remotion video player.</p>
+      </div>
+
+      <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm card-glow transition-all">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background:linear-gradient(135deg,#0e6ba8,#0a2342)">☁️</div>
+          <div>
+            <p class="font-bold text-navy text-sm">Infraestructura</p>
+            <p class="text-xs text-slate-400">InsForge · Docker Compose</p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 leading-relaxed">PostgreSQL gestionado en InsForge (pgvector incluido) + storage de PDFs. Docker local: <code class="font-mono text-xs bg-slate-100 px-1 rounded">make docker-up</code>. Deploy en Railway / Fly.io.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     MODELO DE NEGOCIO
+══════════════════════════════════════════════════════ -->
+<section class="py-20 sm:py-28 bg-white">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6">
+    <div class="text-center mb-14">
+      <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#0a9396" data-i18n="biz.label">Negocio</p>
+      <h2 class="text-3xl sm:text-4xl font-black text-navy" data-i18n="biz.title">Modelo de negocio</h2>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-8 items-start">
+      <!-- Revenue -->
+      <div class="space-y-4">
+        <h3 class="font-bold text-navy text-lg flex items-center gap-2">💰 Revenue streams</h3>
+        <div class="bg-white rounded-2xl p-5 border shadow-sm" style="border-color:#94d2bd">
+          <div class="flex items-start gap-4">
+            <span class="text-3xl">🔧</span>
+            <div>
+              <p class="font-bold text-navy">15% comisión por servicio</p>
+              <p class="text-slate-500 text-sm mt-1">El técnico cierra el trabajo a través de la plataforma. AnclaIA cobra 15% del valor del servicio.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border shadow-sm" style="border-color:#94d2bd">
+          <div class="flex items-start gap-4">
+            <span class="text-3xl">⭐</span>
+            <div>
+              <p class="font-bold text-navy">$29/mes Plan Pro</p>
+              <p class="text-slate-500 text-sm mt-1">Suscripción mensual para técnicos certificados. Diagnósticos ilimitados, historial de fallas, herramientas avanzadas.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mercado -->
+      <div class="space-y-4">
+        <h3 class="font-bold text-navy text-lg flex items-center gap-2">🎯 Mercado objetivo</h3>
+        <div class="rounded-2xl p-5 border space-y-3" style="background:#f0f9ff;border-color:#94d2bd">
+          <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-full gradient-teal flex items-center justify-center text-white text-sm font-bold shrink-0">1</span>
+            <div>
+              <p class="font-bold text-navy text-sm">Flotas pesqueras · LATAM</p>
+              <p class="text-xs text-slate-500">Empresas pesqueras medianas con 5-30 embarcaciones</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-full gradient-teal flex items-center justify-center text-white text-sm font-bold shrink-0">2</span>
+            <div>
+              <p class="font-bold text-navy text-sm">Navieras medianas</p>
+              <p class="text-xs text-slate-500">Transporte costero, ferry, cabotaje</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-full gradient-navy flex items-center justify-center text-white text-sm font-bold shrink-0">+</span>
+            <div>
+              <p class="font-bold text-navy text-sm">8 técnicos certificados ya en la red</p>
+              <p class="text-xs text-slate-500">Chile · validados · listos para operar</p>
+            </div>
+          </div>
+        </div>
+        <div class="rounded-2xl p-4 border text-center" style="background:#fdf8ec;border-color:#e9d8a6">
+          <p class="text-xs text-slate-500 mb-1">Siguiente fase</p>
+          <p class="font-bold text-navy text-sm">Matching automático técnico + scheduling → anclaIA.cl</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     WAITLIST / ACCESO ANTICIPADO
+══════════════════════════════════════════════════════ -->
+<section id="waitlist" class="py-20 sm:py-28 gradient-bg">
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 text-center">
+    <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#0a9396" data-i18n="wl.label">Acceso anticipado</p>
+    <h2 class="text-3xl sm:text-4xl font-black text-navy mb-4" data-i18n="wl.title">Únete a la beta privada</h2>
+    <p class="text-slate-500 text-base leading-relaxed mb-10 max-w-lg mx-auto" data-i18n-html="wl.desc">
+      Buscamos <strong class="text-navy">técnicos marítimos certificados</strong> y empresas pesqueras/navieras en Chile y LATAM para la beta.
+      Sin costo durante la prueba.
+    </p>
+
+    <form id="waitlist-form" class="flex flex-col sm:flex-row gap-3 mb-6" onsubmit="handleWaitlist(event)">
+      <input
+        type="email"
+        id="waitlist-email"
+        placeholder="tu@correo.cl" data-i18n-placeholder="wl.ph"
+        required
+        class="flex-1 px-4 py-3.5 rounded-xl border text-sm outline-none transition-all"
+        style="border-color:#94d2bd;background:#fff;color:#0a2342;"
+        onfocus="this.style.borderColor='#0a9396';this.style.boxShadow='0 0 0 3px #0a939620'"
+        onblur="this.style.borderColor='#94d2bd';this.style.boxShadow='none'"
+      />
+      <button
+        type="submit"
+        class="px-6 py-3.5 rounded-xl font-bold text-sm transition-all hover:scale-105 shadow-md"
+        style="background:linear-gradient(135deg,#0a9396,#0e6ba8);color:#fff"
+      >
+        <span data-i18n="wl.btn">Quiero acceso →</span>
+      </button>
+    </form>
+
+    <p id="waitlist-ok" class="hidden text-sm font-semibold" style="color:#0a9396">
+      ✅ ¡Listo! Te avisamos cuando tu acceso esté habilitado.
+    </p>
+
+    <p class="text-xs text-slate-400 mt-2" data-i18n="wl.fine">Sin spam · Cancela cuando quieras · Solo para técnicos y operadores marítimos</p>
+
+    <!-- Social proof -->
+    <div class="mt-10 flex items-center justify-center gap-6 flex-wrap">
+      <div class="flex items-center gap-2">
+        <div class="flex -space-x-2">
+          <div class="w-8 h-8 rounded-full gradient-navy border-2 border-white flex items-center justify-center text-white text-xs font-bold">JH</div>
+          <div class="w-8 h-8 rounded-full gradient-teal border-2 border-white flex items-center justify-center text-white text-xs font-bold">MC</div>
+          <div class="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold" style="background:#ee9b00;color:#0a2342">RP</div>
+        </div>
+        <p class="text-xs text-slate-500" data-i18n="wl.social">8 técnicos ya inscritos</p>
+      </div>
+      <div class="text-xs text-slate-400">·</div>
+      <p class="text-xs text-slate-500">🇨🇱 Chile · 🇵🇪 Perú · 🇪🇨 Ecuador</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  function handleWaitlist(e) {
+    e.preventDefault();
+    var email = document.getElementById('waitlist-email').value;
+    var form  = document.getElementById('waitlist-form');
+    var ok    = document.getElementById('waitlist-ok');
+    // Redirige a mailto como fallback hasta tener backend
+    window.location.href = 'mailto:hernandez.hs@gmail.com?subject=AnclaIA%20Beta&body=Email%3A%20' + encodeURIComponent(email);
+    form.style.display = 'none';
+    ok.classList.remove('hidden');
+  }
+</script>
+
+<!-- ══════════════════════════════════════════════════════
+     PRECIOS
+══════════════════════════════════════════════════════ -->
+<section id="precios" class="py-20 sm:py-28 bg-white">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6">
+    <div class="text-center mb-14">
+      <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#0a9396" data-i18n="pr.label">Planes</p>
+      <h2 class="text-3xl sm:text-4xl font-black text-navy" data-i18n="pr.title">Simple y transparente</h2>
+      <p class="mt-3 text-slate-500 text-sm max-w-lg mx-auto" data-i18n="pr.sub">Sin costos ocultos. Paga solo por el plan que necesitas — o empieza gratis.</p>
+    </div>
+
+    <div class="grid sm:grid-cols-3 gap-6">
+      <!-- Free -->
+      <div class="rounded-2xl border p-7 flex flex-col reveal" style="border-color:#e2e8f0;background:#fafafa">
+        <p class="text-xs font-bold uppercase tracking-widest mb-4" style="color:#64748b">Gratuito</p>
+        <div class="mb-6">
+          <span class="text-4xl font-black text-navy">$0</span>
+          <span class="text-slate-400 text-sm ml-1">/ mes</span>
+        </div>
+        <ul class="space-y-3 text-sm text-slate-600 mb-8 flex-1">
+          <li class="flex items-start gap-2"><span style="color:#0a9396">✓</span> 10 diagnósticos / mes</li>
+          <li class="flex items-start gap-2"><span style="color:#0a9396">✓</span> Modelos FAR1523 y FCV628</li>
+          <li class="flex items-start gap-2"><span style="color:#0a9396">✓</span> Diagnóstico por código de falla</li>
+          <li class="flex items-start gap-2 text-slate-400"><span>✗</span> Sin análisis de imagen</li>
+          <li class="flex items-start gap-2 text-slate-400"><span>✗</span> Sin historial de fallas</li>
+        </ul>
+        <a href="#waitlist" class="block text-center py-3 rounded-xl border font-semibold text-sm transition-all hover:bg-slate-50" style="border-color:#94d2bd;color:#0a9396">
+          Empieza gratis
+        </a>
+      </div>
+
+      <!-- Pro (destacado) -->
+      <div class="rounded-2xl p-7 flex flex-col relative shadow-2xl reveal" style="animation-delay:.12s;background:linear-gradient(160deg,#0a2342,#0e3d6b);border:2px solid #0a9396">
+        <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 text-xs font-bold px-4 py-1 rounded-full" style="background:linear-gradient(135deg,#94d2bd,#0a9396);color:#0a2342">
+          Más popular
+        </div>
+        <p class="text-xs font-bold uppercase tracking-widest mb-4 text-teal-300">Pro</p>
+        <div class="mb-6">
+          <span class="text-4xl font-black text-white">$29</span>
+          <span class="text-blue-300 text-sm ml-1">/ mes</span>
+        </div>
+        <ul class="space-y-3 text-sm text-blue-100 mb-8 flex-1">
+          <li class="flex items-start gap-2"><span style="color:#94d2bd">✓</span> Diagnósticos ilimitados</li>
+          <li class="flex items-start gap-2"><span style="color:#94d2bd">✓</span> Todos los modelos Furuno (7+)</li>
+          <li class="flex items-start gap-2"><span style="color:#94d2bd">✓</span> Análisis de imagen (Vision IA)</li>
+          <li class="flex items-start gap-2"><span style="color:#94d2bd">✓</span> Historial completo de fallas</li>
+          <li class="flex items-start gap-2"><span style="color:#94d2bd">✓</span> Chat RAG conversacional</li>
+          <li class="flex items-start gap-2"><span style="color:#94d2bd">✓</span> Perfil público certificado</li>
+        </ul>
+        <a href="#waitlist"
+          class="block text-center py-3 rounded-xl font-bold text-sm transition-all hover:scale-105 shadow-lg"
+          style="background:linear-gradient(135deg,#94d2bd,#0a9396);color:#0a2342">
+          Unirse a la beta →
+        </a>
+      </div>
+
+      <!-- Empresa -->
+      <div class="rounded-2xl border p-7 flex flex-col reveal" style="animation-delay:.24s;border-color:#e2e8f0;background:#fafafa">
+        <p class="text-xs font-bold uppercase tracking-widest mb-4" style="color:#64748b">Empresa</p>
+        <div class="mb-6">
+          <span class="text-4xl font-black text-navy">Custom</span>
+        </div>
+        <ul class="space-y-3 text-sm text-slate-600 mb-8 flex-1">
+          <li class="flex items-start gap-2"><span style="color:#0a9396">✓</span> Todo lo de Pro</li>
+          <li class="flex items-start gap-2"><span style="color:#0a9396">✓</span> Múltiples técnicos (equipo)</li>
+          <li class="flex items-start gap-2"><span style="color:#0a9396">✓</span> Integración API REST propia</li>
+          <li class="flex items-start gap-2"><span style="color:#0a9396">✓</span> SLA garantizado</li>
+          <li class="flex items-start gap-2"><span style="color:#0a9396">✓</span> Onboarding y soporte dedicado</li>
+        </ul>
+        <a href="mailto:hernandez.hs@gmail.com?subject=AnclaIA%20Empresa"
+          class="block text-center py-3 rounded-xl border font-semibold text-sm transition-all hover:bg-slate-50" style="border-color:#94d2bd;color:#0a9396">
+          Contactar →
+        </a>
+      </div>
+    </div>
+
+    <p class="text-center mt-8 text-xs text-slate-400">Durante la beta, todos los planes son <strong>gratuitos</strong> para técnicos validados.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     FAQ
+══════════════════════════════════════════════════════ -->
+<section id="faq" class="py-20 sm:py-28 gradient-bg">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <div class="text-center mb-12">
+      <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#0a9396" data-i18n="faq.label">Preguntas frecuentes</p>
+      <h2 class="text-3xl sm:text-4xl font-black text-navy" data-i18n="faq.title">Todo lo que necesitas saber</h2>
+    </div>
+
+    <div class="space-y-3" id="faq-list">
+
+      <div class="faq-item bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden reveal">
+        <button class="w-full flex items-center justify-between px-6 py-4 text-left gap-4" onclick="toggleFaq(this)">
+          <span class="font-semibold text-navy text-sm">¿AnclaIA reemplaza al técnico marítimo?</span>
+          <span class="faq-icon text-teal-500 font-bold text-xl shrink-0">+</span>
+        </button>
+        <div class="faq-answer px-6 text-sm text-slate-500 leading-relaxed">
+          <div class="pb-5">No. AnclaIA es una herramienta de apoyo — el técnico sigue siendo quien diagnostica y ejecuta la reparación. La IA entrega contexto estructurado basado en el manual oficial para que el técnico llegue preparado al buque, con las herramientas correctas y sin perder tiempo.</div>
+        </div>
+      </div>
+
+      <div class="faq-item bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden reveal" style="animation-delay:.08s">
+        <button class="w-full flex items-center justify-between px-6 py-4 text-left gap-4" onclick="toggleFaq(this)">
+          <span class="font-semibold text-navy text-sm">¿Qué tan preciso es el diagnóstico?</span>
+          <span class="faq-icon text-teal-500 font-bold text-xl shrink-0">+</span>
+        </button>
+        <div class="faq-answer px-6 text-sm text-slate-500 leading-relaxed">
+          <div class="pb-5">El sistema siempre indica el nivel de confianza (ALTA / MEDIA / BAJA) y cita la página exacta del manual de donde proviene la información. Con 31.000+ chunks indexados de manuales oficiales Furuno, los diagnósticos de alta confianza son muy fiables. Si la confianza es BAJA, el sistema lo indica explícitamente y recomienda revisión directa del manual.</div>
+        </div>
+      </div>
+
+      <div class="faq-item bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden reveal" style="animation-delay:.16s">
+        <button class="w-full flex items-center justify-between px-6 py-4 text-left gap-4" onclick="toggleFaq(this)">
+          <span class="font-semibold text-navy text-sm">¿Funciona sin conexión a internet?</span>
+          <span class="faq-icon text-teal-500 font-bold text-xl shrink-0">+</span>
+        </button>
+        <div class="faq-answer px-6 text-sm text-slate-500 leading-relaxed">
+          <div class="pb-5">Actualmente el sistema requiere conexión para consultar el LLM. Para zonas con baja conectividad (alta mar) estamos evaluando un modo offline con modelos más pequeños embedidos. Es parte del roadmap para Q3 2025.</div>
+        </div>
+      </div>
+
+      <div class="faq-item bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden reveal" style="animation-delay:.24s">
+        <button class="w-full flex items-center justify-between px-6 py-4 text-left gap-4" onclick="toggleFaq(this)">
+          <span class="font-semibold text-navy text-sm">¿Solo funciona con equipos Furuno?</span>
+          <span class="faq-icon text-teal-500 font-bold text-xl shrink-0">+</span>
+        </button>
+        <div class="faq-answer px-6 text-sm text-slate-500 leading-relaxed">
+          <div class="pb-5">El MVP indexa manuales Furuno (FAR1523, FAR1518, FAR2127, FCV628, FA170, FM8900S y más). La arquitectura es agnóstica a la marca — se puede indexar cualquier manual técnico en PDF. Raymarine, Garmin y Simrad están en el roadmap. Si tienes manuales de otro fabricante, contáctanos.</div>
+        </div>
+      </div>
+
+      <div class="faq-item bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden reveal" style="animation-delay:.32s">
+        <button class="w-full flex items-center justify-between px-6 py-4 text-left gap-4" onclick="toggleFaq(this)">
+          <span class="font-semibold text-navy text-sm">¿Los datos de diagnóstico son privados?</span>
+          <span class="faq-icon text-teal-500 font-bold text-xl shrink-0">+</span>
+        </button>
+        <div class="faq-answer px-6 text-sm text-slate-500 leading-relaxed">
+          <div class="pb-5">Sí. Los diagnósticos se almacenan en tu cuenta personal y no se comparten con terceros. Las fotos de equipos se procesan en memoria y no se persisten en el servidor. El modelo de IA se invoca vía API segura (TLS). Puedes eliminar tu historial en cualquier momento.</div>
+        </div>
+      </div>
+
+      <div class="faq-item bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden reveal" style="animation-delay:.4s">
+        <button class="w-full flex items-center justify-between px-6 py-4 text-left gap-4" onclick="toggleFaq(this)">
+          <span class="font-semibold text-navy text-sm">¿Puedo desplegar AnclaIA en mi propia infraestructura?</span>
+          <span class="faq-icon text-teal-500 font-bold text-xl shrink-0">+</span>
+        </button>
+        <div class="faq-answer px-6 text-sm text-slate-500 leading-relaxed">
+          <div class="pb-5">Sí, el código es open source (MIT). El <code class="font-mono text-xs bg-slate-100 px-1 rounded">docker-compose.yml</code> levanta todo el sistema en un solo comando. Para empresas con requerimientos de datos on-premise, ofrecemos soporte en el plan Empresa.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     CTA FINAL
+══════════════════════════════════════════════════════ -->
+<section class="gradient-hero py-20 sm:py-28 relative overflow-hidden">
+  <div class="absolute inset-0 pointer-events-none">
+    <div class="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10" style="background:radial-gradient(circle,#94d2bd,transparent)"></div>
+  </div>
+  <div class="relative max-w-3xl mx-auto px-4 sm:px-6 text-center">
+    <div class="text-6xl mb-6 float inline-block">⚓</div>
+    <h2 class="text-3xl sm:text-5xl font-black text-white mb-4" data-i18n="cta.title">AnclaIA está abierto</h2>
+    <p class="text-blue-200 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+      Código open source en GitHub. Levanta el sistema en minutos con Docker.
+      Contribuciones bienvenidas — especialmente para nuevos modelos de equipos.
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="https://github.com/devjaime/anclaIA" target="_blank"
+        class="flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl font-bold text-navy text-base transition-all hover:scale-105 shadow-xl"
+        style="background:linear-gradient(135deg,#94d2bd,#0a9396);color:#0a2342">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        <span data-i18n="cta.gh">Ver en GitHub</span>
+      </a>
+      <a href="mailto:hernandez.hs@gmail.com"
+        class="flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl font-semibold text-white text-base border border-white/20 hover:bg-white/10 transition-all">
+        <span data-i18n="cta.contact">Contacto / Colaborar →</span>
+      </a>
+    </div>
+
+    <!-- Autor -->
+    <div class="mt-14 flex items-center justify-center gap-3">
+      <div class="w-10 h-10 rounded-full gradient-teal flex items-center justify-center text-white font-bold">JH</div>
+      <div class="text-left">
+        <p class="text-white font-semibold text-sm">Jaime Hernández</p>
+        <a href="https://github.com/devjaime" target="_blank" class="text-blue-300 text-xs hover:text-white transition-colors">@devjaime · AI Engineer</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════════════ -->
+<footer class="bg-navy py-6">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <span class="text-base">⚓</span>
+      <span class="text-seafoam text-sm font-semibold">AnclaIA</span>
+      <span class="text-slate-500 text-xs" data-i18n="ft.tag">· Diagnóstico técnico antes de ir a terreno</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="https://github.com/devjaime/anclaIA" target="_blank" class="text-slate-400 hover:text-white text-xs transition-colors">GitHub</a>
+      <span class="text-slate-600">·</span>
+      <span class="text-slate-500 text-xs">Open Source · MIT</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  /* FAQ accordion */
+  function toggleFaq(btn) {
+    var item = btn.closest('.faq-item');
+    var isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(function(el) { el.classList.remove('open'); });
+    if (!isOpen) item.classList.add('open');
+  }
+
+  /* Scroll reveal */
+  (function() {
+    var io = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(function(el) { io.observe(el); });
+  })();
+</script>
+
+<script src="translations.js"></script>
+<script>
+  /* i18n */
+  var currentLang = localStorage.getItem('lang') || 'es';
+
+  function applyLang(lang) {
+    var t = T[lang];
+    document.getElementById('html-root').lang = lang;
+    document.getElementById('lang-label').textContent = lang === 'es' ? 'EN' : 'ES';
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
+      if (t[key] !== undefined) el.textContent = t[key];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-html');
+      if (t[key] !== undefined) el.innerHTML = t[key];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-placeholder');
+      if (t[key] !== undefined) el.placeholder = t[key];
+    });
+    /* waitlist ok message */
+    var wlOk = document.getElementById('waitlist-ok');
+    if (wlOk && t['wl.ok']) wlOk.textContent = t['wl.ok'];
+    currentLang = lang;
+    localStorage.setItem('lang', lang);
+  }
+
+  function toggleLang() {
+    applyLang(currentLang === 'es' ? 'en' : 'es');
+  }
+
+  /* Apply on load */
+  applyLang(currentLang);
+</script>
+</body>
+</html>
